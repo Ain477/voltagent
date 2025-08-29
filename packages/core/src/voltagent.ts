@@ -5,14 +5,11 @@ import type { DangerouslyAllowAny } from "@voltagent/internal/types";
 import type { Agent } from "./agent/agent";
 import type { SubAgentConfig } from "./agent/subagent/types";
 import { getGlobalLogger } from "./logger";
-import { startServer } from "./server";
-import { registerCustomEndpoint, registerCustomEndpoints } from "./server/api";
-import type { ServerConfig } from "./server/api";
-import type { CustomEndpointDefinition } from "./server/custom-endpoints";
-import { AgentRegistry } from "./server/registry";
+
+import { AgentRegistry } from "./registry";
 import type { VoltAgentExporter } from "./telemetry/exporter";
-import type { ServerOptions, VoltAgentOptions } from "./types";
-import { checkForUpdates } from "./utils/update";
+import type { VoltAgentOptions } from "./types";
+
 import { isValidVoltOpsKeys } from "./utils/voltops-validation";
 import { VoltOpsClient } from "./voltops/client";
 import type { Workflow } from "./workflow";
@@ -28,10 +25,7 @@ let registeredProvider: NodeTracerProvider | null = null;
 export class VoltAgent {
   private registry: AgentRegistry;
   private workflowRegistry: WorkflowRegistry;
-  private serverStarted = false;
-  private customEndpoints: CustomEndpointDefinition[] = [];
-  private serverConfig: ServerConfig = {};
-  private serverOptions: ServerOptions = {};
+
   private logger: Logger;
 
   constructor(options: VoltAgentOptions) {
@@ -126,44 +120,6 @@ https://voltagent.dev/docs/observability/developer-console/#migration-guide-from
     if (options.workflows) {
       this.registerWorkflows(options.workflows);
     }
-
-    // Merge server options with backward compatibility
-    // New server object takes precedence over deprecated individual options
-    this.serverOptions = {
-      autoStart: options.server?.autoStart ?? options.autoStart ?? true,
-      port: options.server?.port ?? options.port,
-      enableSwaggerUI: options.server?.enableSwaggerUI ?? options.enableSwaggerUI,
-      customEndpoints: options.server?.customEndpoints ?? options.customEndpoints ?? [],
-    };
-
-    // Store custom endpoints for registration when the server starts
-    this.customEndpoints = [...(this.serverOptions.customEndpoints || [])];
-
-    // Store server configuration for startServer
-    if (this.serverOptions.enableSwaggerUI !== undefined) {
-      this.serverConfig.enableSwaggerUI = this.serverOptions.enableSwaggerUI;
-    }
-    if (this.serverOptions.port !== undefined) {
-      this.serverConfig.port = this.serverOptions.port;
-    }
-
-    // Check dependencies if enabled (run in background)
-    if (options.checkDependencies !== false) {
-      // Run dependency check in background to not block startup
-      Promise.resolve().then(() => {
-        this.checkDependencies().catch(() => {
-          // Silently ignore errors
-        });
-      });
-    }
-
-    // Auto-start server if enabled
-    if (this.serverOptions.autoStart !== false) {
-      this.startServer().catch((err) => {
-        this.logger.error("Failed to start server:", err);
-        process.exit(1);
-      });
-    }
   }
 
   /**
@@ -187,41 +143,6 @@ https://voltagent.dev/docs/observability/developer-console/#migration-guide-from
 
     process.on("SIGTERM", () => shutdown("SIGTERM"));
     process.on("SIGINT", () => shutdown("SIGINT"));
-  }
-
-  /**
-   * Check for dependency updates
-   */
-  private async checkDependencies(): Promise<void> {
-    try {
-      // Quick cache check first
-      const cachedResult = await checkForUpdates(undefined, {
-        filter: "@voltagent",
-        useCache: true,
-      });
-
-      // Show cached results if available
-      if (cachedResult?.hasUpdates) {
-        this.logger.trace("\n");
-        this.logger.trace(cachedResult.message);
-        this.logger.trace("Run 'npm run volt update' to update VoltAgent packages");
-      }
-
-      // Schedule background update after 100ms
-      setTimeout(async () => {
-        try {
-          await checkForUpdates(undefined, {
-            filter: "@voltagent",
-            useCache: true,
-            forceRefresh: true,
-          });
-        } catch (_error) {
-          // Silently ignore background update errors
-        }
-      }, 100);
-    } catch (_error) {
-      // Silently ignore all errors
-    }
   }
 
   /**
@@ -264,79 +185,6 @@ https://voltagent.dev/docs/observability/developer-console/#migration-guide-from
    */
   public registerAgents(agents: Record<string, Agent<any>>): void {
     Object.values(agents).forEach((agent) => this.registerAgent(agent));
-  }
-
-  /**
-   * Start the server
-   */
-  public async startServer(): Promise<void> {
-    if (this.serverStarted) {
-      this.logger.info("Server is already running");
-      return;
-    }
-
-    try {
-      // Register custom endpoints if any
-      if (this.customEndpoints.length > 0) {
-        registerCustomEndpoints(this.customEndpoints);
-      }
-
-      await startServer(this.serverConfig);
-      this.serverStarted = true;
-    } catch (error) {
-      this.logger.error(
-        `Failed to start server: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Register a custom endpoint with the API server
-   * @param endpoint The custom endpoint definition
-   * @throws Error if the endpoint definition is invalid or registration fails
-   */
-  public registerCustomEndpoint(endpoint: CustomEndpointDefinition): void {
-    try {
-      // Add to the internal list
-      this.customEndpoints.push(endpoint);
-
-      // If server is already running, register the endpoint immediately
-      if (this.serverStarted) {
-        registerCustomEndpoint(endpoint);
-      }
-    } catch (error) {
-      this.logger.error(
-        `Failed to register custom endpoint: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      throw error;
-    }
-  }
-
-  /**
-   * Register multiple custom endpoints with the API server
-   * @param endpoints Array of custom endpoint definitions
-   * @throws Error if any endpoint definition is invalid or registration fails
-   */
-  public registerCustomEndpoints(endpoints: CustomEndpointDefinition[]): void {
-    try {
-      if (!endpoints || !Array.isArray(endpoints) || endpoints.length === 0) {
-        return;
-      }
-
-      // Add to the internal list
-      this.customEndpoints.push(...endpoints);
-
-      // If server is already running, register the endpoints immediately
-      if (this.serverStarted) {
-        registerCustomEndpoints(endpoints);
-      }
-    } catch (error) {
-      this.logger.error(
-        `Failed to register custom endpoints: ${error instanceof Error ? error.message : String(error)}`,
-      );
-      throw error;
-    }
   }
 
   /**

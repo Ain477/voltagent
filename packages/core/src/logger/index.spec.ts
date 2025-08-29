@@ -1,11 +1,11 @@
 import type { LogBuffer, Logger } from "@voltagent/internal";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { AgentRegistry } from "../server/registry";
+import { AgentRegistry } from "../registry";
 import * as consoleLoggerModule from "./console-logger";
 import { getGlobalLogBuffer, getGlobalLogger } from "./index";
 
 // Mock the AgentRegistry
-vi.mock("../server/registry", () => ({
+vi.mock("../registry", () => ({
   AgentRegistry: {
     getInstance: vi.fn(),
   },

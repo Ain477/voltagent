@@ -3,7 +3,7 @@ import { safeStringify } from "@voltagent/internal/utils";
 import type { MergeDeep } from "type-fest";
 import { z } from "zod";
 import { getGlobalLogger } from "../../logger";
-import { AgentRegistry } from "../../server/registry";
+import { AgentRegistry } from "../../registry";
 import { createTool } from "../../tool";
 import type {
   StreamEventReasoning,

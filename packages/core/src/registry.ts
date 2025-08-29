@@ -1,8 +1,8 @@
 import type { Logger } from "@voltagent/internal";
-import type { Agent } from "../agent/agent";
-import { AgentEventEmitter } from "../events";
-import type { VoltAgentExporter } from "../telemetry/exporter";
-import type { VoltOpsClient } from "../voltops/types";
+import type { Agent } from "./agent/agent";
+import { AgentEventEmitter } from "./events";
+import type { VoltAgentExporter } from "./telemetry/exporter";
+import type { VoltOpsClient } from "./voltops/types";
 
 /**
  * Registry to manage and track agents

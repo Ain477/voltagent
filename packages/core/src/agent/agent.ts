@@ -27,8 +27,8 @@ import {
   buildToolLogMessage,
 } from "../logger/message-builder";
 import { MemoryManager } from "../memory";
+import { AgentRegistry } from "../registry";
 import type { BaseRetriever } from "../retriever/retriever";
-import { AgentRegistry } from "../server/registry";
 import type { VoltAgentExporter } from "../telemetry/exporter";
 import type { Tool, Toolkit } from "../tool";
 import { ToolManager } from "../tool";

@@ -6,7 +6,7 @@ import type { SpanExporter } from "@opentelemetry/sdk-trace-base";
 import type { Logger } from "@voltagent/internal";
 import type { DangerouslyAllowAny } from "@voltagent/internal/types";
 import type { Agent } from "./agent/agent";
-import type { CustomEndpointDefinition } from "./server/custom-endpoints";
+
 import type { VoltAgentExporter } from "./telemetry/exporter";
 import type { VoltOpsClient } from "./voltops";
 import type { WorkflowChain } from "./workflow/chain";
@@ -26,33 +26,6 @@ export type {
   VoltOpsClientOptions,
   VoltOpsPromptManager,
 } from "./voltops/types";
-
-/**
- * Server configuration options for VoltAgent
- */
-export type ServerOptions = {
-  /**
-   * Whether to automatically start the server
-   * @default true
-   */
-  autoStart?: boolean;
-  /**
-   * Port number for the server
-   * @default 3141 (or next available port)
-   */
-  port?: number;
-  /**
-   * Optional flag to enable/disable Swagger UI
-   * By default:
-   * - In development (NODE_ENV !== 'production'): Swagger UI is enabled
-   * - In production (NODE_ENV === 'production'): Swagger UI is disabled
-   */
-  enableSwaggerUI?: boolean;
-  /**
-   * Optional array of custom endpoint definitions to register with the API server
-   */
-  customEndpoints?: CustomEndpointDefinition[];
-};
 
 /**
  * VoltAgent constructor options
@@ -75,11 +48,6 @@ export type VoltAgentOptions = {
       >
   >;
   /**
-   * Server configuration options
-   */
-  server?: ServerOptions;
-
-  /**
    * Unified VoltOps client for telemetry and prompt management
    * Replaces the old telemetryExporter approach with a comprehensive solution.
    */
@@ -100,22 +68,4 @@ export type VoltAgentOptions = {
    * It's recommended to only provide this in one VoltAgent instance per application process.
    */
   telemetryExporter?: (SpanExporter | VoltAgentExporter) | (SpanExporter | VoltAgentExporter)[];
-
-  /**
-   * @deprecated Use `server.port` instead
-   */
-  port?: number;
-  /**
-   * @deprecated Use `server.autoStart` instead
-   */
-  autoStart?: boolean;
-  checkDependencies?: boolean;
-  /**
-   * @deprecated Use `server.customEndpoints` instead
-   */
-  customEndpoints?: CustomEndpointDefinition[];
-  /**
-   * @deprecated Use `server.enableSwaggerUI` instead
-   */
-  enableSwaggerUI?: boolean;
 };

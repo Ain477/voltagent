@@ -56,23 +56,16 @@ export * from "./types";
 export * from "./utils";
 export * from "./retriever";
 export * from "./mcp";
-export { AgentRegistry } from "./server/registry";
+export { AgentRegistry } from "./registry";
 export { WorkflowRegistry } from "./workflow/registry";
-export { registerCustomEndpoint, registerCustomEndpoints } from "./server/api";
 export * from "./utils/update";
 export * from "./voice";
-export {
-  CustomEndpointDefinition,
-  CustomEndpointHandler,
-  HttpMethod,
-  CustomEndpointError,
-} from "./server/custom-endpoints";
 export * from "./telemetry/exporter";
 export * from "./voltops";
 export type { UsageInfo, StreamPart } from "./agent/providers";
-export type { ServerOptions, VoltAgentOptions } from "./types";
+export type { VoltAgentOptions } from "./types";
 export { VoltAgent } from "./voltagent";
 export { VoltAgent as default } from "./voltagent";
 
 // for backwards compatibility
-export { createAsyncIterableStream, type AsyncIterableStream } from "@voltagent/internal/utils";
+export { createAsyncIterableStream, type AsyncIterableStream } from "@voltagent/internal";
